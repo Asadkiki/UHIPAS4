@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ulangan Harian IPAS - Kelas 4</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            /* Mencegah seleksi teks (copy-paste) di seluruh halaman */
+            user-select: none; 
+            -webkit-user-select: none; 
+        }
+        /* Custom styling untuk radio button */
+        .option-label input:checked + div { 
+            border-color: #3b82f6; 
+            background-color: #eff6ff; 
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen">
+    <!-- Kontainer utama aplikasi -->
+    <div id="app"></div>
+
+    <!-- Global Modal untuk Peringatan & Konfirmasi -->
+    <div id="globalModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-2xl p-6 md:p-8 w-full max-w-md shadow-2xl transform transition-all scale-95" id="modalContent">
+            <h3 id="modalTitle" class="text-xl font-extrabold mb-3 text-slate-800"></h3>
+            <p id="modalMessage" class="text-slate-600 mb-8 leading-relaxed whitespace-pre-line"></p>
+            <div id="modalButtons" class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3"></div>
+        </div>
+    </div>
+
+    <script>
+        // PASTE URL WEB APP APPS SCRIPT ANDA DI SINI
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzgiPFOAbY5vxK6hmy8Zub0b3Ay_Tu5iKFt_1NRVPzCzoR8igWKS1FB8lxqMRZWvqjR/exec";
+
+        // Data Soal, Opsi, dan Kunci Jawaban
+        const quizData = [
+            { q: "Benda berikut yang termasuk zat padat adalah ....", opts: ["A. udara", "B. minyak", "C. batu", "D. air"], ans: 2 },
+            { q: "Sifat utama zat cair adalah ....", opts: ["A. bentuk dan volumenya tetap", "B. bentuk mengikuti wadah, tetapi volumenya tetap", "C. bentuk dan volumenya selalu tetap", "D. memenuhi seluruh ruang yang ditempatinya"], ans: 1 },
+            { q: "Udara termasuk zat ....", opts: ["A. padat", "B. cair", "C. gas", "D. beku"], ans: 2 },
+            { q: "Perubahan wujud dari padat menjadi cair disebut ....", opts: ["A. membeku", "B. mencair", "C. menguap", "D. mengembun"], ans: 1 },
+            { q: "Perubahan wujud dari cair menjadi gas disebut ....", opts: ["A. mencair", "B. membeku", "C. menguap", "D. mengembun"], ans: 2 },
+            { q: "Ketika air dimasukkan ke dalam freezer dan menjadi es, terjadi perubahan ....", opts: ["A. cair → gas", "B. gas → cair", "C. padat → cair", "D. cair → padat"], ans: 3 },
+            { q: "Uap air yang mengenai permukaan tutup panci kemudian menjadi titik-titik air merupakan proses ....", opts: ["A. mencair", "B. membeku", "C. mengembun", "D. menyublim"], ans: 2 },
+            { q: "Kapur barus yang semakin lama semakin kecil menunjukkan perubahan ....", opts: ["A. padat → cair", "B. padat → gas", "C. cair → gas", "D. gas → cair"], ans: 1 },
+            { q: "Contoh peristiwa membeku adalah ....", opts: ["A. es krim meleleh", "B. air menjadi es", "C. pakaian menjadi kering", "D. embun menjadi air"], ans: 1 },
+            { q: "Perubahan wujud yang terjadi ketika lilin dibakar adalah ....", opts: ["A. mencair", "B. membeku", "C. mengembun", "D. menyublim"], ans: 0 },
+            { q: "Rani memasukkan beberapa es batu ke dalam gelas. Setelah beberapa saat, es batu berkurang dan terdapat air di dalam gelas. Kesimpulan yang tepat adalah ....", opts: ["A. air berubah menjadi gas karena terkena udara", "B. es mengalami perubahan dari padat menjadi cair", "C. es mengalami perubahan dari cair menjadi padat", "D. air mengalami perubahan dari gas menjadi cair"], ans: 1 },
+            { q: "Ibu menjemur dua kain yang sama. Kain A dijemur di bawah sinar matahari, sedangkan kain B diletakkan di dalam ruangan. Kain A lebih cepat kering karena ....", opts: ["A. air pada kain A lebih cepat menguap karena mendapat panas", "B. air pada kain A berubah menjadi es", "C. kain A menyerap lebih banyak air", "D. kain B mengalami proses membeku"], ans: 0 },
+            { q: "Dito mengambil gelas berisi es dari kulkas. Beberapa menit kemudian, bagian luar gelas menjadi basah. Dari manakah air tersebut berasal?", opts: ["A. Air dari dalam es menembus gelas", "B. Es mencair dan keluar melalui gelas", "C. Uap air di udara berubah menjadi titik-titik air", "D. Gelas menghasilkan air karena terkena udara"], ans: 2 },
+            { q: "Perhatikan kejadian berikut!\nAir dipanaskan → muncul uap → uap mengenai tutup panci → terbentuk titik air.\nPerubahan wujud yang terjadi berturut-turut adalah ....", opts: ["A. membeku → mencair", "B. menguap → mengembun", "C. mencair → membeku", "D. mengembun → menguap"], ans: 1 },
+            { q: "Siti memiliki cokelat yang diletakkan di dekat jendela yang terkena sinar matahari. Setelah beberapa saat, cokelat menjadi lunak dan meleleh. Jika cokelat tersebut kemudian dimasukkan ke dalam kulkas, kemungkinan yang terjadi adalah ....", opts: ["A. cokelat kembali mengeras karena membeku", "B. cokelat berubah menjadi gas", "C. cokelat semakin cepat menguap", "D. cokelat berubah menjadi air"], ans: 0 },
+            { q: "Andi menjemur pakaian pada hari yang panas dan berangin. Baju tersebut lebih cepat kering dibandingkan ketika dijemur pada hari yang tidak berangin. Hal ini menunjukkan bahwa ....", opts: ["A. angin mengubah air menjadi es", "B. air lebih mudah menguap ketika kondisi mendukung penguapan", "C. angin mengubah kain menjadi gas", "D. pakaian mengalami proses membeku"], ans: 1 },
+            { q: "Perhatikan tiga benda berikut!\nP = batu\nQ = air dalam botol\nR = udara dalam balon\nPernyataan yang benar adalah ....", opts: ["A. P bentuknya mengikuti wadah", "B. Q memiliki bentuk tetap", "C. R dapat memenuhi ruang yang ditempatinya", "D. P dan R memiliki bentuk yang sama"], ans: 2 },
+            { q: "Ibu membuat es batu dengan memasukkan air ke dalam cetakan. Setelah beberapa jam, air berubah menjadi es dan mengikuti bentuk cetakan. Pernyataan yang paling tepat adalah ....", opts: ["A. air menjadi zat gas", "B. air mengalami pembekuan dan menjadi zat padat", "C. es mengalami penguapan", "D. air mengalami pengembunan"], ans: 1 },
+            { q: "Saat memasak air, semakin lama jumlah air dalam panci semakin berkurang. Jika panci dibiarkan terus terbuka, kemungkinan besar air akan ....", opts: ["A. berubah menjadi gas dan bercampur dengan udara", "B. berubah menjadi es", "C. berubah menjadi batu", "D. tetap memiliki jumlah yang sama"], ans: 0 },
+            { q: "Perhatikan pasangan peristiwa berikut!\n(1) Es mencair\n(2) Air menjadi es\n(3) Air menjadi uap\n(4) Uap menjadi titik air\nUrutan perubahan wujud yang melepaskan panas adalah ....", opts: ["A. (1) dan (3)", "B. (2) dan (4)", "C. (1) dan (4)", "D. (2) dan (3)"], ans: 1 }
+        ];
+
+        let state = {
+            screen: 'login', // 'login', 'quiz', 'result'
+            student: { name: '', class: '4' },
+            answers: new Array(quizData.length).fill(null),
+            currentQuestion: 0,
+            warnings: 0,
+            maxWarnings: 3,
+            score: 0,
+            correctCount: 0,
+            isSubmitting: false,
+            isSynced: false
+        };
+
+        function saveState() {
+            localStorage.setItem('ipas_quiz_state_v1', JSON.stringify(state));
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('ipas_quiz_state_v1');
+            if (saved) {
+                state = JSON.parse(saved);
+            }
+        }
+
+        // Deteksi jika user pindah tab / minimize aplikasi
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && state.screen === 'quiz') {
+                registerCheat('Berpindah tab atau menutup layar utama terdeteksi.');
+            }
+        });
+
+        // Cegah klik kanan
+        document.addEventListener('contextmenu', e => e.preventDefault());
+
+        // Cegah shortcut keyboard curang
+        document.addEventListener('keydown', (e) => {
+            if (
+                (e.ctrlKey && ['c', 'v', 'x', 's', 'p'].includes(e.key.toLowerCase())) || 
+                e.key === 'F12' || 
+                e.key === 'PrintScreen' ||
+                (e.ctrlKey && e.shiftKey && ['i', 'j', 'c'].includes(e.key.toLowerCase()))
+            ) {
+                e.preventDefault();
+                if (state.screen === 'quiz') registerCheat('Penggunaan tombol pintasan terlarang (Screenshot/Copy) terdeteksi.');
+            }
+        });
+
+        // Tangkap PrintScreen keyup
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'PrintScreen' && state.screen === 'quiz') {
+                navigator.clipboard.writeText('');
+                registerCheat('Percobaan Screenshot terdeteksi.');
+            }
+        });
+
+        function registerCheat(reason) {
+            state.warnings++;
+            saveState();
+            
+            if (state.warnings >= state.maxWarnings) {
+                finishQuiz(true); // Ujian dikumpulkan paksa
+                showModal('⛔ Ujian Dihentikan Paksa!', `Anda telah terdeteksi melakukan pelanggaran sebanyak ${state.maxWarnings} kali.\n\nSistem secara otomatis mengumpulkan ujian Anda dan mengirim ke Spreadsheet.`, [
+                    { text: 'Lihat Hasil', class: 'bg-red-600 text-white w-full sm:w-auto', onClick: hideModal }
+                ]);
+            } else {
+                showModal('⚠️ Peringatan Kecurangan!', `Sistem Deteksi: ${reason}\n\nPeringatan ${state.warnings} dari ${state.maxWarnings}.\n\nJika mencapai batas maksimum, ujian Anda akan ditarik paksa secara otomatis. Mohon tetap fokus pada halaman ujian!`, [
+                    { text: 'Saya Mengerti', class: 'bg-amber-500 text-white w-full sm:w-auto', onClick: hideModal }
+                ]);
+            }
+            renderApp();
+        }
+
+        function renderApp() {
+            const app = document.getElementById('app');
+            if (state.screen === 'login') app.innerHTML = getLoginHTML();
+            else if (state.screen === 'quiz') app.innerHTML = getQuizHTML();
+            else if (state.screen === 'result') app.innerHTML = getResultHTML();
+        }
+
+        function getLoginHTML() {
+            return `
+                <div class="flex flex-col items-center justify-center min-h-screen p-4 bg-slate-100">
+                    <div class="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 border border-slate-200">
+                        <div class="mb-6 flex justify-center">
+                            <div class="bg-blue-600 text-white p-4 rounded-2xl shadow-lg shadow-blue-200">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                            </div>
+                        </div>
+                        <h1 class="text-2xl font-black text-center text-slate-800 mb-1">ULANGAN HARIAN</h1>
+                        <p class="text-center text-blue-600 font-bold tracking-wide mb-8">IPAS - KELAS 4</p>
+                        
+                        <div class="space-y-5">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Nama Lengkap</label>
+                                <input type="text" id="inputName" value="${state.student.name}" onchange="updateName(this.value)" class="w-full border-2 border-slate-200 rounded-xl p-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition font-medium" placeholder="Ketik nama Anda di sini..." autocomplete="off">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Kelas</label>
+                                <input type="text" value="4" readonly class="w-full border-2 border-slate-100 rounded-xl p-3 bg-slate-50 text-slate-500 cursor-not-allowed font-bold">
+                            </div>
+                            
+                            <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl mt-6">
+                                <p class="text-xs text-amber-800 font-semibold leading-relaxed">
+                                    <span class="text-amber-600 text-sm">⚠️</span> <b>ATURAN UJIAN:</b><br>Sistem Anti-Cheat aktif. Dilarang keluar dari halaman ujian, menutup layar, berpindah tab, atau melakukan screenshot. Ujian akan dihentikan otomatis pada peringatan ke-3 dan nilai langsung terkirim ke Guru.
+                                </p>
+                            </div>
+
+                            <button onclick="startQuiz()" class="w-full bg-blue-600 text-white font-bold text-lg rounded-xl p-4 mt-2 shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all">Mulai Ujian</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getQuizHTML() {
+            const q = quizData[state.currentQuestion];
+            
+            let optionsHTML = q.opts.map((opt, idx) => {
+                const isChecked = state.answers[state.currentQuestion] === idx;
+                return `
+                    <label class="option-label block cursor-pointer group">
+                        <input type="radio" name="q_opt" class="hidden" value="${idx}" ${isChecked ? 'checked' : ''} onchange="selectOption(${idx})">
+                        <div class="border-2 rounded-xl p-4 transition-all duration-200 flex items-center shadow-sm ${isChecked ? 'border-blue-500 bg-blue-50 shadow-blue-100' : 'border-slate-200 bg-white hover:border-blue-300'}">
+                            <div class="w-6 h-6 rounded-full border-2 flex-shrink-0 mr-4 flex items-center justify-center transition-colors ${isChecked ? 'border-blue-600' : 'border-slate-300 group-hover:border-blue-400'}">
+                                ${isChecked ? '<div class="w-3 h-3 bg-blue-600 rounded-full"></div>' : ''}
+                            </div>
+                            <span class="text-slate-800 font-medium">${opt}</span>
+                        </div>
+                    </label>
+                `;
+            }).join('');
+
+            let gridHTML = state.answers.map((ans, idx) => {
+                let bgClass = 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100 shadow-sm';
+                if (ans !== null) {
+                    bgClass = 'bg-green-500 border-green-600 text-white hover:bg-green-600 shadow-sm shadow-green-200';
+                }
+                if (state.currentQuestion === idx) {
+                    bgClass = (ans !== null) 
+                        ? 'bg-green-600 border-green-800 text-white ring-4 ring-green-200 ring-offset-1 z-10' 
+                        : 'bg-blue-50 border-blue-500 text-blue-700 ring-4 ring-blue-200 ring-offset-1 z-10 font-bold';
+                }
+                
+                return `<button onclick="goToQ(${idx})" class="w-full aspect-square rounded-lg border flex items-center justify-center font-bold text-sm transition-all ${bgClass}">${idx + 1}</button>`;
+            }).join('');
+
+            return `
+                <div class="max-w-5xl mx-auto p-4 md:py-8 min-h-screen flex flex-col gap-5">
+                    
+                    <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-blue-600 text-white px-3 py-1.5 rounded-lg font-bold text-sm shadow-inner shadow-blue-800/30">IPAS</div>
+                            <div class="text-slate-700 font-bold border-l-2 pl-3 border-slate-200 hidden sm:block truncate max-w-xs">${state.student.name}</div>
+                        </div>
+                        <div class="flex items-center gap-2 bg-red-50 pl-3 pr-1 py-1 rounded-xl border border-red-200">
+                            <span class="text-red-600 font-bold text-xs uppercase tracking-wider">Warning</span>
+                            <span class="bg-red-500 text-white text-sm font-black px-3 py-1 rounded-lg shadow-sm">${state.warnings} / 3</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row gap-5 flex-grow items-start">
+                        <div class="flex-grow w-full flex flex-col gap-4">
+                            <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 flex-grow">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h2 class="text-xl font-black text-blue-900 bg-blue-50 px-4 py-2 rounded-xl inline-block border border-blue-100">Soal No. ${state.currentQuestion + 1}</h2>
+                                </div>
+                                <p class="text-slate-800 text-lg leading-relaxed mb-8 whitespace-pre-line font-medium">${q.q}</p>
+                                
+                                <div class="space-y-3">
+                                    ${optionsHTML}
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                                <button onclick="prevQ()" ${state.currentQuestion === 0 ? 'disabled class="opacity-40 cursor-not-allowed w-full sm:w-auto px-6 py-3.5 rounded-xl font-bold bg-slate-100 text-slate-500 border border-slate-200"' : 'class="w-full sm:w-auto px-6 py-3.5 rounded-xl font-bold bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shadow-sm"'} >&larr; Sebelumnya</button>
+                                
+                                <button onclick="nextQ()" ${state.currentQuestion === quizData.length - 1 ? 'disabled class="opacity-40 cursor-not-allowed w-full sm:w-auto px-6 py-3.5 rounded-xl font-bold bg-slate-100 text-slate-500 border border-slate-200"' : 'class="w-full sm:w-auto px-6 py-3.5 rounded-xl font-bold bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shadow-sm"'} >Selanjutnya &rarr;</button>
+                            </div>
+                        </div>
+
+                        <div class="w-full md:w-80 flex-shrink-0">
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 sticky top-4">
+                                <h3 class="font-bold text-slate-800 mb-4 flex items-center justify-between">
+                                    Daftar Soal
+                                    <span class="text-xs bg-slate-100 font-bold px-3 py-1.5 rounded-lg text-slate-600 border border-slate-200">${state.answers.filter(a => a !== null).length} dari ${quizData.length}</span>
+                               </h3>
+                                
+                                <div class="grid grid-cols-5 gap-2.5 mb-6">
+                                    ${gridHTML}
+                                </div>
+                                
+                                <div class="space-y-3 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                    <div class="flex items-center gap-3 text-sm font-semibold text-slate-600">
+                                        <div class="w-4 h-4 bg-green-500 rounded shadow-sm border border-green-600"></div> Sudah dijawab
+                                    </div>
+                                    <div class="flex items-center gap-3 text-sm font-semibold text-slate-600">
+                                        <div class="w-4 h-4 bg-white border-2 border-slate-300 rounded shadow-sm"></div> Belum dijawab
+                                    </div>
+                                </div>
+
+                                <button onclick="confirmSubmit()" class="w-full bg-emerald-500 text-white py-4 rounded-xl font-black shadow-lg shadow-emerald-200 hover:bg-emerald-600 active:scale-95 transition-all text-lg flex items-center justify-center gap-2 border border-emerald-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                    Kumpulkan Ujian
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateName(val) {
+            state.student.name = val;
+            saveState();
+        }
+
+        function startQuiz() {
+            const nameInput = document.getElementById('inputName').value.trim();
+            if (!nameInput) {
+                showModal('Peringatan!', 'Silakan isi Nama Lengkap Anda terlebih dahulu sebelum memulai ujian.', [{ text: 'OK', class: 'bg-blue-600 text-white w-full sm:w-auto', onClick: hideModal }]);
+                return;
+            }
+            state.student.name = nameInput;
+            state.screen = 'quiz';
+            saveState();
+            renderApp();
+        }
+
+        function selectOption(optIndex) {
+            state.answers[state.currentQuestion] = optIndex;
+            saveState();
+            renderApp();
+        }
+
+        function prevQ() {
+            if (state.currentQuestion > 0) {
+                state.currentQuestion--;
+                saveState();
+                renderApp();
+            }
+        }
+
+        function nextQ() {
+            if (state.currentQuestion < quizData.length - 1) {
+                state.currentQuestion++;
+                saveState();
+                renderApp();
+            }
+        }
+
+        function goToQ(idx) {
+            state.currentQuestion = idx;
+            saveState();
+            renderApp();
+        }
+
+        function confirmSubmit() {
+            const answeredCount = state.answers.filter(a => a !== null).length;
+            const totalCount = quizData.length;
+            const unansweredCount = totalCount - answeredCount;
+
+            let message = `Anda telah menjawab ${answeredCount} dari ${totalCount} soal.`;
+            if (unansweredCount > 0) {
+                message += `\n\n⚠️ Masih ada ${unansweredCount} soal yang belum dijawab. Cek kembali peta soal Anda.`;
+            }
+            message += `\n\nApakah Anda yakin ingin mengumpulkan ujian sekarang?`;
+
+            showModal('Konfirmasi Submit', message, [
+                { text: 'Batal', class: 'bg-slate-200 text-slate-800 hover:bg-slate-300 w-full sm:w-auto', onClick: hideModal },
+                { text: 'Ya, Kumpulkan', class: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-200 w-full sm:w-auto', onClick: () => finishQuiz(false) }
+            ]);
+        }
+
+        async function finishQuiz(isForced = false) {
+            hideModal();
+            
+            // Hitung Skor
+            let correct = 0;
+            state.answers.forEach((ans, index) => {
+                if (ans === quizData[index].ans) {
+                    correct++;
+                }
+            });
+
+            state.correctCount = correct;
+            state.score = (correct / quizData.length) * 100;
+            state.screen = 'result';
+            state.isSubmitting = true;
+            saveState();
+            renderApp();
+
+            // Payload yang akan dikirim ke Spreadsheet
+            const payload = {
+                name: state.student.name,
+                class: state.student.class,
+                score: Math.round(state.score),
+                correctCount: state.correctCount,
+                totalQuestions: quizData.length,
+                warnings: state.warnings,
+                isForced: isForced,
+                answers: state.answers
+            };
+
+            // Kirim data ke Apps Script jika URL valid
+            if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL.includes("script.google.com")) {
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    state.isSynced = true;
+                } catch (err) {
+                    console.error("Gagal mengirim data ke Spreadsheet:", err);
+                    state.isSynced = false;
+                }
+            }
+            
+            state.isSubmitting = false;
+            saveState();
+            renderApp();
+        }
+
+        function getResultHTML() {
+            let message = "Kerja bagus!";
+            let colorTheme = "text-emerald-600 bg-emerald-100 border-emerald-200";
+            let iconColor = "text-emerald-600";
+            
+            if (state.score < 75) {
+                message = "Terus semangat belajar untuk nilai yang lebih baik!";
+                colorTheme = "text-amber-600 bg-amber-100 border-amber-200";
+                iconColor = "text-amber-600";
+            }
+
+            let syncStatusHTML = `
+                <div class="flex items-center justify-center gap-2 text-xs font-bold text-emerald-600 bg-emerald-50 py-2 px-3 rounded-lg border border-emerald-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Tersimpan di Google Sheets Guru
+                </div>
+            `;
+
+            if (state.isSubmitting) {
+                syncStatusHTML = `
+                    <div class="flex items-center justify-center gap-2 text-xs font-bold text-blue-600 bg-blue-50 py-2 px-3 rounded-lg border border-blue-200 animate-pulse">
+                        Mengirim hasil ke Google Sheets...
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="flex flex-col items-center justify-center min-h-screen p-4 bg-slate-100">
+                    <div class="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 md:p-10 border border-slate-200 text-center relative overflow-hidden">
+                        
+                        <div class="mx-auto ${colorTheme} w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-sm border-2">
+                            <svg class="w-12 h-12 ${iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        
+                        <h1 class="text-3xl font-black text-slate-800 mb-2">Ujian Selesai</h1>
+                        <p class="text-slate-500 mb-6 font-medium">${message}</p>
+                        
+                        <div class="mb-6">
+                            ${syncStatusHTML}
+                        </div>
+
+                        <div class="bg-blue-50 p-6 rounded-2xl mb-6 border-2 border-blue-100 shadow-sm shadow-blue-50">
+                            <p class="text-sm text-blue-800 font-extrabold uppercase tracking-widest mb-1">Nilai Anda</p>
+                            <p class="text-7xl font-black text-blue-600 tracking-tighter">${Math.round(state.score)}</p>
+                        </div>
+                        
+                        <div class="bg-slate-50 p-5 rounded-2xl text-left border border-slate-200 space-y-3 mb-6">
+                            <div class="flex justify-between items-center border-b border-slate-200 pb-2.5">
+                                <span class="text-slate-500 font-semibold text-sm">Nama Siswa</span>
+                                <span class="font-bold text-slate-800 truncate pl-4 text-sm">${state.student.name}</span>
+                            </div>
+                            <div class="flex justify-between items-center border-b border-slate-200 pb-2.5">
+                                <span class="text-slate-500 font-semibold text-sm">Jawaban Benar</span>
+                                <span class="font-bold text-slate-800 text-sm">${state.correctCount} / ${quizData.length} Soal</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500 font-semibold text-sm">Status Pelanggaran</span>
+                                <span class="font-bold px-2.5 py-0.5 rounded-lg text-xs ${state.warnings > 0 ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-green-100 text-green-700 border border-green-200'}">${state.warnings} Kali</span>
+                            </div>
+                        </div>
+
+                        <button onclick="resetDemoApp()" class="text-xs text-slate-400 hover:text-slate-600 underline decoration-slate-300">Reset Data Ujian (Demo)</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.showModal = function(title, message, buttons) {
+            const modalEl = document.getElementById('globalModal');
+            const contentEl = document.getElementById('modalContent');
+            
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerText = message;
+            
+            const btnContainer = document.getElementById('modalButtons');
+            btnContainer.innerHTML = '';
+            
+            buttons.forEach(btn => {
+                const button = document.createElement('button');
+                button.className = `px-6 py-3 rounded-xl font-bold transition-all active:scale-95 text-center ${btn.class}`;
+                button.innerText = btn.text;
+                button.onclick = btn.onClick;
+                btnContainer.appendChild(button);
+            });
+            
+            modalEl.classList.remove('hidden');
+            modalEl.classList.add('flex');
+            
+            setTimeout(() => { 
+                modalEl.classList.remove('opacity-0');
+                modalEl.classList.add('opacity-100');
+                contentEl.classList.remove('scale-95');
+                contentEl.classList.add('scale-100');
+            }, 10);
+        };
+
+        window.hideModal = function() {
+            const modalEl = document.getElementById('globalModal');
+            const contentEl = document.getElementById('modalContent');
+            
+            modalEl.classList.remove('opacity-100');
+            modalEl.classList.add('opacity-0');
+            contentEl.classList.remove('scale-100');
+            contentEl.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modalEl.classList.add('hidden');
+                modalEl.classList.remove('flex');
+            }, 300);
+        };
+
+        function resetDemoApp() {
+            localStorage.removeItem('ipas_quiz_state_v1');
+            location.reload();
+        }
+
+        window.onload = () => {
+            loadState();
+            renderApp();
+        };
+    </script>
+</body>
+</html>
